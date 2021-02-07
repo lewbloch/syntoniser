@@ -8,6 +8,19 @@ class Spin(Enum):
     widdershins = False
 
 
+class Substep(Enum):
+    """
+    # Substeps per full cycle: [200, 400, 800, 1600, 3200, 6400]
+    #  200 steps / cycle = 1.8 degrees / step = π/100 radians
+    """
+    FULL = (0, 0, 0)
+    HALF = (1, 0, 0)
+    QUARTER = (0, 1, 0)
+    EIGHTH = (1, 1, 0)
+    SIXTEENTH = (0, 0, 1)
+    THIRTYSECONDTH = (1, 0, 1)
+
+
 class Stepper:
     """
     # motor_a = Stepper(wayward=13, moving=19, disabler=12, substepper=(16, 17, 20))
@@ -23,15 +36,6 @@ class Stepper:
             pin = Outpin(pn)
             self.substepper.append(pin)
             pin.off()
-
-        self.substeppings = {
-            200: (0, 0, 0),
-            400: (1, 0, 0),
-            800: (0, 1, 0),
-            1600: (1, 1, 0),
-            3200: (0, 0, 1),
-            6400: (1, 0, 1)
-        }
 
         self.halt()
 
@@ -58,15 +62,13 @@ class Stepper:
             time.sleep(pause)
         self.disabler.on()
 
-    def set_substepping(self, substep):
+    def substep(self, substep: Substep):
         """
-        substep: number of steps per cycle, from (200, 400, 800, 1600, 3200, 6400)
+        substep: subdivision of the standard full step size,
+         from (FULL, HALF, QUARTER, EIGHTH, SIXTEENTH, THIRTYSECONDTH)
         """
-        substepping = self.substeppings[substep]
-        for mp in range(len(substepping)):
-            if substepping[mp] == 0:
-                self.substepper[mp].on()
-            else:
-                self.substepper[mp].off()
+        substeppins = substep.value
+        for pinx in range(len(substeppins)):
+            self.substepper[pinx].on() if substeppins[pinx] == 0 else self.substepper[pinx].off()
 
         print(self.substepper)
